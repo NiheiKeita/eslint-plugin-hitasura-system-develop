@@ -1,5 +1,6 @@
-import myRule from "./rules/myRule";
+import { noDifferentName } from "./rules/no-different-name";
+
 
 export const rules = {
-  'my-rule': myRule,
+  "no-different-name": noDifferentName
 };
