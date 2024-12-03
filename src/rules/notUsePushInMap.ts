@@ -91,12 +91,31 @@ export const notUsePushInMapRule: RuleModule<'notUsePushInMap', [Options]> = {
             });
           }
         }
+        //　再帰的に検知する
+        const checkIfState = (statement: TSESTree.Statement) => {
+          if (statement.type !== "IfStatement") return
+          const consequent = statement.consequent
+          if (consequent.type === "BlockStatement") {
+            consequent.body.forEach((innerStatement: TSESTree.Statement) => {
+              if (innerStatement.type === "ExpressionStatement") {
+                checkPushCall(innerStatement.expression)
+              } else {
+                checkIfState(innerStatement)
+              }
+            })
+          }
+          if (consequent.type === "ExpressionStatement") {
+            checkPushCall(consequent.expression)
+          }
+        }
 
         if (body.type === 'BlockStatement') {
           // map(i=> {}) のかたちのもの
           body.body.forEach(statement => {
             if (statement.type === 'ExpressionStatement') {
               checkPushCall(statement.expression)
+            } else {
+              checkIfState(statement)
             }
           });
         } else {
