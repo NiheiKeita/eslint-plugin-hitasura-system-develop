@@ -108,3 +108,5 @@ export const notUsePushInMapRule: RuleModule<'notUsePushInMap', [Options]> = {
     }
   }
 }
+
+module.exports = notUsePushInMapRule
