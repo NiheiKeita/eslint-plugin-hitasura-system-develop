@@ -1,19 +1,63 @@
 import { TSESTree } from '@typescript-eslint/utils'
 import { RuleModule } from '@typescript-eslint/utils/dist/eslint-utils'
 
-export const notUsePushInMapRule: RuleModule<'notUsePushInMap'> = {
+type Options = {
+  include?: string[],
+  exclude?: string[]
+}
+
+export const notUsePushInMapRule: RuleModule<'notUsePushInMap', [Options]> = {
   meta: {
     type: 'suggestion',
     docs: {
       description: 'Disallow the use of push inside map method',
     },
     messages: {
-      notUsePushInMap: "Do not use"
+      notUsePushInMap: "Do not use push inside a map method."
     },
-    schema: []
+    schema: [
+      {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          include: {
+            type: "array",
+            items: {
+              type: "string"
+            },
+            minItems: 0
+          },
+          exclude: {
+            type: "array",
+            items: {
+              type: "string"
+            },
+            minItems: 0
+          }
+        }
+      }
+    ]
   },
-  defaultOptions: [],
+  defaultOptions: [{
+    include: ["./src/**/*.js", "./src/**/*.ts", "./src/**/*.jsx", "./src/**/*.tsx"],
+    exclude: [],
+  }],
   create(context) {
+    const options = context.options[0] || {}
+    const filename = context.filename
+    const includePatterns = options.include?.map((pattern: string) => new RegExp(pattern.replace(/\*\*/g, '.*')))
+    const excludePatterns = options.exclude?.map((pattern: string) => new RegExp(pattern.replace(/\*\*/g, '.*')))
+    // ファイルが対象外かどうかを判定
+    const isFileExcluded = () => {
+      const isIncluded = includePatterns?.some((regex) => regex.test(filename)) ?? true
+      const isExcluded = excludePatterns?.some((regex) => regex.test(filename)) ?? false
+      return !isIncluded || isExcluded;
+    };
+    // ファイルが対象外であればルールをスキップ
+    if (isFileExcluded()) {
+      return {}
+    }
+
     return {
       CallExpression(node: TSESTree.CallExpression) {
         const callee = node.callee
