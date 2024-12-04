@@ -13,7 +13,7 @@ export const notUsePushInMapRule: RuleModule<'notUsePushInMap', [Options]> = {
       description: 'Disallow the use of push inside map method',
     },
     messages: {
-      notUsePushInMap: "Do not use push inside a map method."
+      notUsePushInMap: "Do not use push inside a {{ methodName }} method."
     },
     schema: [
       {
@@ -57,17 +57,36 @@ export const notUsePushInMapRule: RuleModule<'notUsePushInMap', [Options]> = {
     if (isFileExcluded()) {
       return {}
     }
+    const arrayMethods = [
+      "concat",
+      "copyWithin",
+      "every",
+      "filter",
+      "flat",
+      "flatMap",
+      "indexOf",
+      "lastIndexOf",
+      "map",
+      "reduce",
+      "reduceRight",
+      "reverse",
+      "slice",
+      "some",
+      "sort",
+      "splice"
+    ];
 
     return {
       CallExpression(node: TSESTree.CallExpression) {
         const callee = node.callee
         if (callee.type !== 'MemberExpression' ||
           callee.property.type !== 'Identifier' ||
-          callee.property.name !== 'map') {
-          // mapを使用していない場合はチェックしない
+          !arrayMethods.includes(callee.property.name)) {
+          // arrayMethod or foreachを使用していない場合はチェックしない
           return
         }
 
+        const methodName = callee.property.name;
         const callback = node.arguments[0]
         if (!callback || (callback.type !== 'FunctionExpression' && callback.type !== 'ArrowFunctionExpression')) {
           // .map() か .map(function()) の場合でないときはチェックしない
@@ -84,10 +103,11 @@ export const notUsePushInMapRule: RuleModule<'notUsePushInMap', [Options]> = {
             innerCall.property.type === 'Identifier' &&
             innerCall.property.name === 'push'
           ) {
-            // map 内で push を使用している場合に報告
+            // arrayMethod 内で push を使用している場合に報告
             context.report({
               node: innerCall,
               messageId: 'notUsePushInMap',
+              data: { methodName },
             });
           }
         }
