@@ -17,3 +17,5 @@ export const noDifferentName: Rule.RuleModule = {
     };
   },
 };
+
+module.exports = noDifferentName
