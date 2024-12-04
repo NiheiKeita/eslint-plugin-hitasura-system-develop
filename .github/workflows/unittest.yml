@@ -1,16 +1,16 @@
-name: ESLint
+name: Test
 
 on: [pull_request]
 
 jobs:
-  eslint:
-    name: eslint
+  test:
+    name: Test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
       - name: install
-        run: npm install
+        run: npm ci
       - name: build
-        run: npm build
+        run: npm run build
       - name: test
         run: npm run test
